@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tagih Pro - Manajemen Toko Modern</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f4f5; --bg-elevated: #ffffff; --bg-subtle: #f9f9f9; --bg-dark: #0a0a0a;
+      --border: #e5e5e5; --border-strong: #d4d4d4; --text: #0a0a0a; --text-secondary: #525252;
+      --text-muted: #a3a3a3; --text-inverse: #fafafa; --accent-hover: #262626;
+      --success: #16a34a; --success-bg: #f0fdf4; --warning: #d97706; --warning-bg: #fffbeb;
+      --danger: #dc2626; --danger-bg: #fef2f2; --info: #2563eb;
+      --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+      --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05);
+      --radius: 12px; --radius-sm: 8px; --radius-lg: 16px; --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+    
+    .app-layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: linear-gradient(180deg, #1c1c1c 0%, #2a2a2a 100%); border-right: 1px solid #3d3d3d; padding: 24px 0; position: fixed; height: 100vh; overflow-y: auto; z-index: 200; transition: transform 0.3s; box-shadow: 5px 0 15px rgba(0,0,0,0.4); }
+    .sidebar::-webkit-scrollbar { width: 4px; } .sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+    .sidebar-header { padding: 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .sidebar-header .logo { width: 40px; height: 40px; background: linear-gradient(145deg, #e8e8e8, #9e9e9e); color: #1a1a1a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; box-shadow: 3px 3px 6px rgba(0,0,0,0.5), -1px -1px 3px rgba(255,255,255,0.3); text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
+    .sidebar-header h1 { font-size: 17px; font-weight: 800; color: #f5f5f5; }
+    .sidebar-header p { font-size: 10px; color: #888; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .sidebar-close { margin-left: auto; background: transparent; border: none; color: #888; cursor: pointer; padding: 4px; border-radius: 4px; transition: var(--transition); display: none; }
+    .sidebar-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 24px; color: #a0a0a0; font-weight: 600; font-size: 13px; cursor: pointer; transition: var(--transition); border-left: 3px solid transparent; margin: 4px 8px; border-radius: 0 8px 8px 0; }
+    .nav-item:hover { background: linear-gradient(90deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%); color: #fff; }
+    .nav-item.active { background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%); color: #ffffff; border-left: 3px solid #d4d4d4; box-shadow: inset 2px 0 5px rgba(0,0,0,0.3); }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    
+    .main-content { margin-left: 260px; flex: 1; width: calc(100% - 260px); }
+    
+    .top-header { position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; justify-content: flex-end; align-items: center; gap: 16px; z-index: 100; }
+    .menu-toggle { display: none; background: transparent; border: none; cursor: pointer; margin-right: auto; }
+    .notif-wrapper { position: relative; }
+    .notif-btn { position: relative; background: transparent; border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: var(--transition); }
+    .notif-btn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+    .notif-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 5px; border: 2px solid white; }
+    .notif-dropdown { position: absolute; top: 50px; right: 0; width: 340px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 300; opacity: 0; visibility: hidden; transform: translateY(10px); transition: var(--transition); }
+    .notif-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
+    .notif-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .notif-list { max-height: 400px; overflow-y: auto; }
+    .notif-item { padding: 14px 20px; border-bottom: 1px solid var(--bg-subtle); display: flex; align-items: center; gap: 12px; cursor: pointer; transition: var(--transition); }
+    .notif-item:hover { background: var(--bg-subtle); }
+    .notif-item:last-child { border: none; }
+    .notif-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-dark); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+    .notif-info { flex: 1; min-width: 0; }
+    .notif-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .notif-desc { font-size: 11px; color: var(--text-muted); }
+    .notif-empty { padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+    .page { display: none; animation: fadeIn 0.3s ease; padding: 32px; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .page-header { margin-bottom: 24px; }
+    .page-title { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+    .page-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: var(--transition); text-decoration: none; }
+    .btn-primary { background: var(--bg-dark); color: var(--text-inverse); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-secondary { background: var(--bg-elevated); color: var(--text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--bg-subtle); }
+    .btn-wa { background: var(--success); color: white; }
+    .btn-wa:hover { background: #15803d; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; color: var(--text-muted); transition: var(--transition); }
+    .btn-icon:hover { background: var(--bg-subtle); color: var(--text); }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+    
+    .card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-elevated); }
+    .card-title { font-weight: 700; font-size: 15px; }
+    .card-body { padding: 20px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--bg-subtle); }
+    th { text-align: left; padding: 12px 20px; font-weight: 600; font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+    td { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: var(--bg-subtle); }
+    .text-right { text-align: right; } .text-success { color: var(--success); } .text-danger { color: var(--danger); }
+    .font-mono { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .badge { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-success { background: var(--success-bg); color: var(--success); } .badge-warning { background: var(--warning-bg); color: var(--warning); } .badge-danger { background: var(--danger-bg); color: var(--danger); }
+    
+    .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,10,0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; visibility: hidden; transition: var(--transition); }
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+    .modal { background: var(--bg-elevated); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: var(--transition); }
+    .modal-overlay.active .modal { transform: translateY(0); }
+    .modal-wa { max-width: 560px; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-body { padding: 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .form-input, .form-select, .form-textarea { padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; width: 100%; background: var(--bg-elevated); color: var(--text); }
+    .form-input:focus { outline: none; border-color: var(--bg-dark); box-shadow: 0 0 0 3px rgba(10,10,10,0.05); }
+    .form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    
+    .wa-recipient { background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .wa-recipient-info { flex: 1; }
+    .wa-recipient-name { font-weight: 600; font-size: 14px; }
+    .wa-recipient-detail { font-size: 12px; color: var(--text-muted); }
+    .wa-recipient-amount { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; }
+    .wa-template-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .wa-tab { padding: 6px 12px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--text-secondary); font-family: inherit; font-size: 11px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 4px; }
+    .wa-tab.active { background: var(--bg-dark); color: var(--text-inverse); border-color: var(--bg-dark); }
+    .wa-message-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
+    
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--bg-dark); color: var(--text-inverse); padding: 12px 18px; border-radius: 8px; box-shadow: var(--shadow-lg); font-size: 13px; font-weight: 500; transform: translateX(120%); transition: transform 0.3s; display: flex; align-items: center; gap: 8px; }
+    .toast.show { transform: translateX(0); }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    
+    @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; width: 100%; }
+      .menu-toggle { display: block; }
+      .sidebar-close { display: block; }
+      .page { padding: 20px 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      th, td { padding: 10px 12px; font-size: 12px; }
+      .hide-mobile { display: none; }
+      .notif-dropdown { width: calc(100vw - 32px); right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar" id="mainSidebar">
+      <div class="sidebar-header">
+        <div class="logo">T</div>
+        <div>
+          <h1>Tagih Pro</h1>
+          <p>Modern Store System</p>
+        </div>
+        <button class="sidebar-close" id="closeSidebarBtn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <nav>
+        <div class="nav-item active" data-page="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Home</div>
+        <div class="nav-item" data-page="gudang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Gudang Barang</div>
+        <div class="nav-item" data-page="penjualan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Penjualan</div>
+        <div class="nav-item" data-page="akuntansi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Buku Akuntansi</div>
+        <div class="nav-item" data-page="pembayaran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Bukti & Link Bayar</div>
+        <div class="nav-item" data-page="setting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Setting Toko</div>
+        <div class="nav-item" data-page="info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Info Pengembang</div>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <button class="menu-toggle" id="menuToggleBtn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="notif-wrapper">
+          <button class="notif-btn" id="notifBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
+          <div class="notif-dropdown" id="notifDropdown">
+            <div class="notif-header"><span>Tagihan Belum Lunas</span><span class="badge badge-danger" id="notifCount">0</span></div>
+            <div class="notif-list" id="notifList"></div>
+          </div>
+        </div>
+      </header>
+
+      <div id="page-home" class="page active">
+        <div class="page-header"><div class="page-title">Dashboard</div><div class="page-subtitle">Ringkasan operasional toko Anda hari ini</div></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Total Penjualan</div><div class="stat-value" id="statPenjualan">Rp 0</div></div>
+          <div class="stat-card"><div class="stat-label">Laba Bersih</div><div class="stat-value text-success" id="statLaba">Rp 0</div></div>
+          <div class="stat-card"><div class="stat-label">Tagihan Terbuka</div><div class="stat-value text-danger" id="statTagihan">Rp 0</div></div>
+          <div class="stat-card"><div class="stat-label">Nilai Stok</div><div class="stat-value" id="statStok">Rp 0</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Tagihan Belum Lunas</div><button class="btn btn-primary btn-sm" data-action="openModal" data-target="tagihanModal">Tambah Tagihan</button></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Pelanggan</th><th class="hide-mobile">Produk</th><th class="text-right">Jumlah</th><th class="hide-mobile">Jatuh Tempo</th><th class="text-right">Aksi</th></tr></thead><tbody id="tableHomeTagihan"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="page-gudang" class="page">
+        <div class="page-header"><div class="page-title">Gudang Barang</div><div class="page-subtitle">Kelola stok, modal, dan harga jual</div></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Daftar Produk</div><button class="btn btn-primary btn-sm" data-action="openGudangModal">Tambah Barang</button></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Nama Barang</th><th class="hide-mobile">Harga Modal</th><th>Harga Jual</th><th>Stok</th><th class="text-right">Aksi</th></tr></thead><tbody id="tableGudang"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="page-penjualan" class="page">
+        <div class="page-header"><div class="page-title">Penjualan</div><div class="page-subtitle">Catat transaksi penjualan dan permintaan barang</div></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Riwayat Penjualan</div><button class="btn btn-primary btn-sm" data-action="openPenjualanModal">Catat Penjualan</button></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Tanggal</th><th>Customer</th><th class="hide-mobile">Produk</th><th class="text-right">Total</th><th>Status</th><th class="text-right">Aksi</th></tr></thead><tbody id="tablePenjualan"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="page-akuntansi" class="page">
+        <div class="page-header"><div class="page-title">Buku Akuntansi</div><div class="page-subtitle">Hitung laba rugi dan presisi keuntungan toko</div></div>
+        <div class="card" style="margin-bottom: 24px">
+          <div class="card-header"><div class="card-title">Pengaturan Target Laba</div></div>
+          <div class="card-body"><div style="display: flex; gap: 16px; align-items: flex-end;"><div class="form-group" style="flex: 1; margin: 0;"><label class="form-label">Target Margin Keuntungan (%)</label><input type="number" id="targetLabaInput" class="form-input" placeholder="Contoh: 20"></div><button class="btn btn-primary" id="btnSimpanTargetLaba">Simpan Target</button></div></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Total Omzet</div><div class="stat-value" id="akOmzet">Rp 0</div></div>
+          <div class="stat-card"><div class="stat-label">Total Modal (HPP)</div><div class="stat-value text-muted" id="akModal">Rp 0</div></div>
+          <div class="stat-card"><div class="stat-label">Laba Kotor</div><div class="stat-value text-success" id="akLaba">Rp 0</div></div>
+          <div class="stat-card"><div class="stat-label">Status Margin</div><div class="stat-value" id="akStatus" style="font-size: 18px">-</div></div>
+        </div>
+      </div>
+
+      <div id="page-pembayaran" class="page">
+        <div class="page-header"><div class="page-title">Bukti & Link Pembayaran</div><div class="page-subtitle">Bagikan rekening toko dan link WA untuk penagihan</div></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Daftar Rekening Toko</div><button class="btn btn-primary btn-sm" data-action="openBankModal">Tambah Rekening</button></div>
+          <div class="card-body"><div id="listBank" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;"></div></div>
+        </div>
+      </div>
+
+      <div id="page-setting" class="page">
+        <div class="page-header"><div class="page-title">Setting Toko</div><div class="page-subtitle">Kelola profil toko, galeri, peta, dan promosi</div></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Profil & Promosi Toko</div></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group full"><label class="form-label">Nama Toko</label><input type="text" id="set_nama" class="form-input"></div>
+              <div class="form-group full"><label class="form-label">Alamat Toko</label><textarea id="set_alamat" class="form-textarea"></textarea></div>
+              <div class="form-group full"><label class="form-label">Link Google Maps</label><input type="text" id="set_maps" class="form-input" placeholder="https://maps.google.com/..."></div>
+              <div class="form-group"><label class="form-label">No Telepon / WA Toko</label><input type="text" id="set_telp" class="form-input"></div>
+              <div class="form-group"><label class="form-label">Link Gambar Galeri (Pisahkan dengan koma)</label><input type="text" id="set_galeri" class="form-input" placeholder="url1.jpg, url2.jpg"></div>
+              <div class="form-group full"><label class="form-label">Teks Promosi (Untuk dibagikan)</label><textarea id="set_promo" class="form-textarea" style="min-height: 100px;"></textarea></div>
+            </div>
+            <div style="display:flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+              <button class="btn btn-primary" id="btnSaveStoreProfile">Simpan Setting</button>
+              <button class="btn btn-wa" id="btnSharePromoWA">Share WA Promosi</button>
+              <button class="btn btn-secondary" id="btnSharePromoTG" style="background:#0088cc; color:white; border:none;">Share Telegram</button>
+            </div>
+            <div id="galleryPreview" style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-info" class="page">
+        <div class="page-header"><div class="page-title">Info Pengembang</div><div class="page-subtitle">Dukungan dan kontak pengembang</div></div>
+        <div class="card">
+          <div class="card-body" style="text-align: center; padding: 48px 24px;">
+            <div style="width: 80px; height: 80px; background: var(--bg-dark); color: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; margin: 0 auto 20px;">IW</div>
+            <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">ImanWaluyoDigi-media</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Pengembang Aplikasi Tagih Pro</p>
+            <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+              <a href="https://wa.me/6287812203039" target="_blank" class="btn btn-wa"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.608.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.078 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> 087812203039</a>
+              <a href="mailto:imanwaluyo1985@gmail.com" target="_blank" class="btn btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> imanwaluyo1985@gmail.com</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="tagihanModal"><div class="modal"><div class="modal-header"><div class="modal-title">Tambah Tagihan</div><button class="btn-icon" data-action="closeModal" data-target="tagihanModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><input type="hidden" id="tagihan_id"><div class="form-group full"><label class="form-label">Nama Pelanggan</label><input type="text" id="tagihan_nama" class="form-input"></div><div class="form-grid"><div class="form-group"><label class="form-label">No WhatsApp</label><input type="text" id="tagihan_telepon" class="form-input" placeholder="81234567890"></div><div class="form-group"><label class="form-label">Jumlah Tagihan</label><input type="number" id="tagihan_jumlah" class="form-input"></div></div><div class="form-group full"><label class="form-label">Produk / Keterangan</label><input type="text" id="tagihan_produk" class="form-input"></div><div class="form-grid"><div class="form-group"><label class="form-label">Tanggal</label><input type="date" id="tagihan_tanggal" class="form-input"></div><div class="form-group"><label class="form-label">Jatuh Tempo</label><input type="date" id="tagihan_jthTempo" class="form-input"></div></div><div class="form-group full"><label class="form-label">Status</label><select id="tagihan_status" class="form-select"><option>Belum Bayar</option><option>Lunas</option><option>Terlambat</option></select></div></div><div class="modal-footer"><button class="btn btn-secondary" data-action="closeModal" data-target="tagihanModal">Batal</button><button class="btn btn-primary" data-action="saveTagihan">Simpan</button></div></div></div>
+  <div class="modal-overlay" id="gudangModal"><div class="modal"><div class="modal-header"><div class="modal-title" id="gudang_title">Tambah Barang</div><button class="btn-icon" data-action="closeModal" data-target="gudangModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><input type="hidden" id="gudang_id"><div class="form-group full"><label class="form-label">Nama Barang</label><input type="text" id="gudang_nama" class="form-input"></div><div class="form-grid"><div class="form-group"><label class="form-label">Harga Modal (Kulak)</label><input type="number" id="gudang_modal" class="form-input"></div><div class="form-group"><label class="form-label">Harga Jual</label><input type="number" id="gudang_jual" class="form-input"></div></div><div class="form-group full"><label class="form-label">Stok Awal</label><input type="number" id="gudang_stok" class="form-input"></div></div><div class="modal-footer"><button class="btn btn-secondary" data-action="closeModal" data-target="gudangModal">Batal</button><button class="btn btn-primary" data-action="saveGudang">Simpan</button></div></div></div>
+  <div class="modal-overlay" id="penjualanModal"><div class="modal"><div class="modal-header"><div class="modal-title">Catat Penjualan</div><button class="btn-icon" data-action="closeModal" data-target="penjualanModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><div class="form-grid"><div class="form-group"><label class="form-label">Tanggal</label><input type="date" id="jual_tanggal" class="form-input"></div><div class="form-group"><label class="form-label">Nama Customer</label><input type="text" id="jual_customer" class="form-input"></div></div><div class="form-group full"><label class="form-label">No WA Customer</label><input type="text" id="jual_wa" class="form-input" placeholder="81234567890"></div><div class="form-group full"><label class="form-label">Pilih Barang</label><select id="jual_produk" class="form-select"></select></div><div class="form-grid"><div class="form-group"><label class="form-label">Qty</label><input type="number" id="jual_qty" class="form-input" value="1"></div><div class="form-group"><label class="form-label">Total Penjualan</label><input type="number" id="jual_total" class="form-input" readonly></div></div><div class="form-group full"><label class="form-label">Status Pembayaran</label><select id="jual_status" class="form-select"><option>Lunas</option><option>Belum Bayar</option></select></div></div><div class="modal-footer"><button class="btn btn-secondary" data-action="closeModal" data-target="penjualanModal">Batal</button><button class="btn btn-primary" data-action="savePenjualan">Simpan</button></div></div></div>
+  <div class="modal-overlay" id="bankModal"><div class="modal"><div class="modal-header"><div class="modal-title">Tambah Rekening</div><button class="btn-icon" data-action="closeModal" data-target="bankModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><input type="hidden" id="bank_id"><div class="form-group full"><label class="form-label">Nama Bank (BCA/Mandiri dll)</label><input type="text" id="bank_bank" class="form-input"></div><div class="form-grid"><div class="form-group"><label class="form-label">No Rekening</label><input type="text" id="bank_norek" class="form-input"></div><div class="form-group"><label class="form-label">Atas Nama</label><input type="text" id="bank_atasnama" class="form-input"></div></div></div><div class="modal-footer"><button class="btn btn-secondary" data-action="closeModal" data-target="bankModal">Batal</button><button class="btn btn-primary" data-action="saveBank">Simpan</button></div></div></div>
+  <div class="modal-overlay" id="waModal"><div class="modal modal-wa"><div class="modal-header"><div class="modal-title">Kirim Tagihan WhatsApp</div><button class="btn-icon" data-action="closeModal" data-target="waModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><div class="wa-recipient" id="waRecipient"><div class="notif-avatar" id="waAvatar" style="background: var(--bg-dark); color: white;">B</div><div class="wa-recipient-info"><div class="wa-recipient-name" id="waName">Nama Pelanggan</div><div class="wa-recipient-detail" id="waDetail">+62 ...</div></div><div class="wa-recipient-amount" id="waAmount">Rp 0</div></div><div class="wa-template-tabs"><button class="wa-tab active" data-template="pengingat">Pengingat</button><button class="wa-tab" data-template="jatuhtempo">Jatuh Tempo</button><button class="wa-tab" data-template="terlambat">Terlambat</button><button class="wa-tab" data-template="lunas">Terima Kasih</button></div><div class="form-group full"><label class="form-label">Pesan WhatsApp</label><textarea class="form-textarea" id="waMessage" style="min-height: 160px;"></textarea><div class="wa-message-meta"><span>Pesan dapat diedit sebelum dikirim</span><span id="charCount">0 karakter</span></div></div><div class="form-group full" style="margin-bottom: 0;"><label class="form-label">Nama Bisnis / Toko Anda</label><input type="text" class="form-input" id="namaToko" placeholder="Contoh: Toko Berkah Jaya" value="Toko Saya"></div></div><div class="modal-footer"><button class="btn btn-secondary" id="btnCopyMsg"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Salin Pesan</button><button class="btn btn-wa" id="btnSendWA"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.608.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.078 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> Buka WhatsApp</button></div></div></div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // === PENTING: GANTI URL DI BAWAH INI DENGAN URL WEB APP ANDA ===
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzC3dcmrTJDiXh78LWU1jC7Ji4IBJeoHTaUnEtJAan5W0RFIqbzb8b1_niEgPUDg-YG/exec';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      let appData = { tagihan: [], gudang: [], penjualan: [], bank: [], setting: {targetLaba: 20}, settingToko: {} };
+      let currentWATagihan = null;
+      let currentTemplate = 'pengingat';
+
+      function showToast(msg, type='info') { const t = document.createElement('div'); t.className = `toast ${type}`; t.innerText = msg; document.getElementById('toastContainer').appendChild(t); setTimeout(() => t.classList.add('show'), 10); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000); }
+      function formatRupiah(num) { return 'Rp ' + (Number(num) || 0).toLocaleString('id-ID'); }
+      function escapeHtml(str) { return str ? String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]) : ''; }
+      function getInitials(nama) { if(!nama) return '?'; const parts = nama.trim().split(/\s+/); if (parts.length === 1) return parts[0].charAt(0).toUpperCase(); return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase(); }
+
+      function showPage(pageId, el) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); const page = document.getElementById('page-' + pageId); if(page) page.classList.add('active'); if(el) el.classList.add('active'); if(window.innerWidth <= 768) document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('notifDropdown').classList.remove('active'); }
+      function openModal(id) { document.getElementById(id).classList.add('active'); }
+      function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+      async function loadData() {
+        try {
+          const res = await fetch(API_URL + '?action=getInitialData');
+          const data = await res.json();
+          appData = data;
+          renderAll();
+        } catch (err) {
+          showToast('Gagal memuat data. Pastikan URL Web App sudah benar.', 'error');
+          console.error(err);
+        }
+      }
+
+      function renderAll() {
+        renderHome(); renderGudang(); renderPenjualan(); renderAkuntansi(); renderBank(); renderNotif(); renderSetting();
+        document.getElementById('targetLabaInput').value = appData.setting.targetLaba || 20;
+      }
+
+      function renderNotif() {
+        const unpaid = appData.tagihan.filter(t => t.status !== 'Lunas');
+        const badge = document.getElementById('notifBadge'); const count = document.getElementById('notifCount'); const list = document.getElementById('notifList');
+        if (unpaid.length > 0) {
+          badge.style.display = 'flex'; badge.innerText = unpaid.length; count.innerText = unpaid.length;
+          list.innerHTML = unpaid.map(t => `<div class="notif-item" data-action="openWAModal" data-id="${t.id}"><div class="notif-avatar">${getInitials(t.nama)}</div><div class="notif-info"><div class="notif-name">${escapeHtml(t.nama)}</div><div class="notif-desc">${escapeHtml(t.produk)} • ${formatRupiah(t.jumlah)}</div></div><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--success)"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.608.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.078 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div>`).join('');
+        } else { badge.style.display = 'none'; count.innerText = '0'; list.innerHTML = '<div class="notif-empty">Tidak ada tagihan tertunggak. Semua lunas!</div>'; }
+      }
+
+      function renderHome() {
+        const lunas = appData.penjualan.filter(p => p.status === 'Lunas'); const totalJual = lunas.reduce((s, p) => s + Number(p.total), 0); const totalLaba = lunas.reduce((s, p) => s + Number(p.untung), 0);
+        const tagihanAktif = appData.tagihan.filter(t => t.status !== 'Lunas'); const totalTagihan = tagihanAktif.reduce((s, t) => s + Number(t.jumlah), 0);
+        const totalStok = appData.gudang.reduce((s, g) => s + (Number(g.modal) * Number(g.stok)), 0);
+        document.getElementById('statPenjualan').innerText = formatRupiah(totalJual); document.getElementById('statLaba').innerText = formatRupiah(totalLaba); document.getElementById('statTagihan').innerText = formatRupiah(totalTagihan); document.getElementById('statStok').innerText = formatRupiah(totalStok);
+        const tb = document.getElementById('tableHomeTagihan');
+        tb.innerHTML = tagihanAktif.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted)">Tidak ada tagihan aktif</td></tr>` : tagihanAktif.map(t => `<tr><td><strong>${escapeHtml(t.nama)}</strong><br><span class="text-muted" style="font-size:11px;">${escapeHtml(t.telepon || '-')}</span></td><td class="hide-mobile">${escapeHtml(t.produk)}</td><td class="text-right font-mono">${formatRupiah(t.jumlah)}</td><td class="hide-mobile">${escapeHtml(t.jthTempo || '-')}</td><td class="text-right"><button class="btn-icon" data-action="openWAModal" data-id="${t.id}" title="Kirim WA" style="color: var(--success);"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.608.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.078 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></button><button class="btn-icon" data-action="editTagihan" data-id="${t.id}" title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" data-action="deleteData" data-sheet="Tagihan" data-id="${t.id}" title="Hapus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('');
+      }
+
+      function renderGudang() { const tb = document.getElementById('tableGudang'); tb.innerHTML = appData.gudang.length === 0 ? `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted)">Belum ada barang di gudang</td></tr>` : appData.gudang.map(g => `<tr><td><strong>${escapeHtml(g.nama)}</strong></td><td class="hide-mobile font-mono">${formatRupiah(g.modal)}</td><td class="font-mono">${formatRupiah(g.jual)}</td><td>${g.stok}</td><td class="text-right"><button class="btn-icon" data-action="openGudangModal" data-id="${g.id}" title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" data-action="deleteData" data-sheet="Gudang" data-id="${g.id}" title="Hapus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join(''); }
+      function renderPenjualan() { const tb = document.getElementById('tablePenjualan'); tb.innerHTML = appData.penjualan.length === 0 ? `<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--text-muted)">Belum ada transaksi penjualan</td></tr>` : appData.penjualan.map(p => `<tr><td>${escapeHtml(p.tanggal)}</td><td>${escapeHtml(p.customer)}</td><td class="hide-mobile">${escapeHtml(p.produk)} (${p.qty}x)</td><td class="text-right font-mono">${formatRupiah(p.total)}</td><td><span class="badge ${p.status === 'Lunas' ? 'badge-success' : 'badge-warning'}">${p.status}</span></td><td class="text-right"><button class="btn-icon" data-action="deleteData" data-sheet="Penjualan" data-id="${p.id}" title="Hapus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join(''); }
+      function renderAkuntansi() { const lunas = appData.penjualan.filter(p => p.status === 'Lunas'); const omzet = lunas.reduce((s, p) => s + Number(p.total), 0); const modal = lunas.reduce((s, p) => s + (Number(p.modal) * Number(p.qty)), 0); const laba = omzet - modal; const margin = omzet > 0 ? (laba / omzet) * 100 : 0; const target = Number(appData.setting.targetLaba) || 0; document.getElementById('akOmzet').innerText = formatRupiah(omzet); document.getElementById('akModal').innerText = formatRupiah(modal); document.getElementById('akLaba').innerText = formatRupiah(laba); const statusEl = document.getElementById('akStatus'); if (omzet === 0) { statusEl.innerText = 'Belum ada transaksi'; statusEl.className = 'stat-value text-muted'; } else if (margin >= target) { statusEl.innerText = `Sehat (${margin.toFixed(1)}%)`; statusEl.className = 'stat-value text-success'; } else { statusEl.innerText = `Kurang (${margin.toFixed(1)}%)`; statusEl.className = 'stat-value text-danger'; } }
+      function renderBank() { const list = document.getElementById('listBank'); list.innerHTML = appData.bank.length === 0 ? `<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-muted)">Belum ada rekening terdaftar</div>` : appData.bank.map(b => `<div class="card" style="margin:0;"><div class="card-body" style="padding: 20px;"><h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">${escapeHtml(b.bank)}</h3><p class="font-mono" style="font-size: 16px; letter-spacing: 1px; margin-bottom: 4px;">${escapeHtml(b.norek)}</p><p class="text-muted" style="font-size: 12px;">a.n. ${escapeHtml(b.atasnama)}</p><button class="btn btn-secondary btn-sm" style="margin-top: 12px; width: 100%;" data-action="copyText" data-text="${escapeHtml(b.norek)}">Salin No Rek</button></div></div>`).join(''); }
+      
+      function renderSetting() {
+        const s = appData.settingToko || {};
+        document.getElementById('set_nama').value = s.namaToko || '';
+        document.getElementById('set_alamat').value = s.alamat || '';
+        document.getElementById('set_maps').value = s.maps || '';
+        document.getElementById('set_telp').value = s.telp || '';
+        document.getElementById('set_galeri').value = s.galeri || '';
+        document.getElementById('set_promo').value = s.promoText || '';
+        const prev = document.getElementById('galleryPreview');
+        if(s.galeri) {
+          const imgs = s.galeri.split(',').map(u => u.trim()).filter(u => u);
+          prev.innerHTML = imgs.map(u => `<img src="${escapeHtml(u)}" style="width:100%; height:100px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.style.display='none'">`).join('');
+        } else { prev.innerHTML = ''; }
+      }
+
+      async function saveStoreProfile() {
+        const data = { namaToko: document.getElementById('set_nama').value, alamat: document.getElementById('set_alamat').value, maps: document.getElementById('set_maps').value, telp: document.getElementById('set_telp').value, galeri: document.getElementById('set_galeri').value, promoText: document.getElementById('set_promo').value };
+        try {
+          const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiAction: 'saveStoreProfile', data: data }) });
+          const result = await res.json();
+          if (result.success) { showToast('Setting toko disimpan', 'success'); loadData(); }
+        } catch (err) { showToast('Error koneksi', 'error'); }
+      }
+
+      function sharePromoWA() {
+        const s = appData.settingToko || {};
+        let msg = `*${s.namaToko || 'Toko Kami'}*\n\n${s.promoText || 'Promo menarik menanti Anda!'}\n\nAlamat: ${s.alamat || '-'}\nMaps: ${s.maps || '-'}\nTelp: ${s.telp || '-'}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+
+      function sharePromoTG() {
+        const s = appData.settingToko || {};
+        let msg = `*${s.namaToko || 'Toko Kami'}*\n\n${s.promoText || 'Promo menarik menanti Anda!'}\n\nAlamat: ${s.alamat || '-'}\nMaps: ${s.maps || '-'}\nTelp: ${s.telp || '-'}`;
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(s.maps || 'https://google.com')}&text=${encodeURIComponent(msg)}`, '_blank');
+      }
+
+      function openWAModal(id) { const data = appData.tagihan.find(t => t.id === id); if (!data) return; currentWATagihan = data; currentTemplate = 'pengingat'; document.getElementById('waAvatar').innerText = getInitials(data.nama); document.getElementById('waName').innerText = data.nama; document.getElementById('waDetail').innerText = '+62 ' + (data.telepon || ''); document.getElementById('waAmount').innerText = formatRupiah(data.jumlah); document.querySelectorAll('.wa-tab').forEach(t => t.classList.toggle('active', t.dataset.template === 'pengingat')); generateMessage(); openModal('waModal'); }
+      function setTemplate(template) { currentTemplate = template; document.querySelectorAll('.wa-tab').forEach(t => t.classList.toggle('active', t.dataset.template === template)); generateMessage(); }
+      function generateMessage() { if (!currentWATagihan) return; const d = currentWATagihan; const nama = d.nama || 'Bapak/Ibu'; const produk = d.produk || ''; const jumlah = formatRupiah(d.jumlah); const jthTempo = d.jthTempo || ''; const toko = document.getElementById('namaToko').value || 'Toko Kami'; let pesan = ''; if (currentTemplate === 'pengingat') { pesan = `Selamat pagi/siang/sore Bapak/Ibu *${nama}*,\n\nPerkenalkan, kami dari *${toko}* ingin menyampaikan informasi terkait transaksi${produk ? ` \`${produk}\`` : ''} yang Bapak/Ibu lakukan.\n\nBersama ini kami sampaikan bahwa masih terdapat tagihan sebesar *${jumlah}*${jthTempo ? ` yang akan jatuh tempo pada *${jthTempo}*` : ''}.\n\nApabila Bapak/Ibu telah melakukan pembayaran, mohon abaikan pesan ini. Namun apabila belum, kami memohon dengan hormat agar berkenan melakukan pembayaran.\n\nApabila terdapat kendala atau memerlukan informasi tambahan, jangan ragu untuk menghubungi kami. Kami sangat menghargai komunikasi yang baik.\n\nTerima kasih atas perhatian dan kerjasamanya.\nSalam hormat,\n*${toko}*`; } else if (currentTemplate === 'jatuhtempo') { pesan = `Selamat pagi/siang/sore Bapak/Ibu *${nama}*,\n\nSemoga Bapak/Ibu dalam keadaan sehat dan baik-baik saja.\n\nIzinkan kami mengingatkan bahwa tagihan${produk ? ` untuk \`${produk}\`` : ''} sebesar *${jumlah}* akan jatuh tempo hari ini, *${jthTempo}*.\n\nKami sangat menghargai jika Bapak/Ibu berkenan untuk melakukan pembayaran sesuai dengan jangka waktu yang telah disepakati. Apabila sudah melakukan pembayaran, mohon abaikan pesan ini dan terima kasih banyak.\n\nUntuk informasi rekening pembayaran atau pertanyaan lainnya, silakan hubungi kami. Kami siap membantu.\n\nTerima kasih atas pengertian dan kerjasamanya yang baik.\nSalam hangat,\n*${toko}*`; } else if (currentTemplate === 'terlambat') { pesan = `Selamat pagi/siang/sore Bapak/Ibu *${nama}*,\n\nSemoga Bapak/Ibu dalam keadaan baik.\n\nKami dari *${toko}* ingin menyampaikan dengan hormat bahwa tagihan${produk ? ` untuk \`${produk}\`` : ''} sebesar *${jumlah}* yang seharusnya jatuh tempo pada *${jthTempo}* hingga saat ini belum kami terima.\n\nKami memahami bahwa terkadang ada hal-hal yang tidak terduga. Oleh karena itu, kami ingin menanyakan apabila ada kendala atau kesulitan dalam proses pembayaran? Kami terbuka untuk berdiskusi.\n\nApabila Bapak/Ibu sudah melakukan pembayaran, mohon abaikan pesan ini. Namun apabila belum, kami sangat berharap agar berkenan untuk segera melakukan pembayaran.\n\nUntuk informasi lebih lanjut, jangan ragu menghubungi kami. Terima kasih atas pengertian dan kerjasamanya.\nSalam hormat,\n*${toko}*`; } else if (currentTemplate === 'lunas') { pesan = `Selamat pagi/siang/sore Bapak/Ibu *${nama}*,\n\nTerima kasih yang sebesar-besarnya atas pembayaran${produk ? ` untuk \`${produk}\`` : ''} sebesar *${jumlah}* yang telah Bapak/Ibu lunasi.\n\nKami sangat menghargai kepercayaan dan kerjasama yang baik ini. Semoga hubungan bisnis kita dapat terus berlanjut dengan baik di masa mendatang.\n\nApabila ada pertanyaan atau memerlukan bantuan lainnya, jangan ragu untuk menghubungi kami.\n\nSekali lagi, terima kasih banyak.\nSalam hangat,\n*${toko}*`; } document.getElementById('waMessage').value = pesan; document.getElementById('charCount').innerText = pesan.length + ' karakter'; }
+      function copyMessage() { const msg = document.getElementById('waMessage').value; navigator.clipboard.writeText(msg).then(() => showToast('Pesan berhasil disalin', 'success')); }
+      function sendWhatsApp() { if (!currentWATagihan) return; const msg = document.getElementById('waMessage').value; let phone = (currentWATagihan.telepon || '').replace(/^0/, ''); if (!phone.startsWith('62')) phone = '62' + phone; const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`; window.open(url, '_blank'); showToast('Membuka WhatsApp...', 'info'); }
+
+      async function saveDataGeneric(sheetName, data, action, callback) {
+        try {
+          const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiAction: 'saveData', sheetName, action, data }) });
+          const result = await res.json();
+          if (result.success) { showToast('Data berhasil disimpan', 'success'); loadData(); if (callback) callback(result); }
+          else { showToast('Gagal menyimpan data', 'error'); }
+        } catch (err) { showToast('Error koneksi', 'error'); }
+      }
+      
+      function saveTagihan() { const id = document.getElementById('tagihan_id').value; const data = { id: id || '', nama: document.getElementById('tagihan_nama').value, telepon: document.getElementById('tagihan_telepon').value, produk: document.getElementById('tagihan_produk').value, jumlah: document.getElementById('tagihan_jumlah').value, tanggal: document.getElementById('tagihan_tanggal').value, jthTempo: document.getElementById('tagihan_jthTempo').value, status: document.getElementById('tagihan_status').value, catatan: '', createdAt: new Date().toISOString() }; saveDataGeneric('Tagihan', data, id ? 'edit' : 'add', () => closeModal('tagihanModal')); }
+      function editTagihan(id) { const t = appData.tagihan.find(x => x.id === id); document.getElementById('tagihan_id').value = t.id; document.getElementById('tagihan_nama').value = t.nama; document.getElementById('tagihan_telepon').value = t.telepon; document.getElementById('tagihan_produk').value = t.produk; document.getElementById('tagihan_jumlah').value = t.jumlah; document.getElementById('tagihan_tanggal').value = t.tanggal; document.getElementById('tagihan_jthTempo').value = t.jthTempo; document.getElementById('tagihan_status').value = t.status; openModal('tagihanModal'); }
+      function openGudangModal(id) { document.getElementById('gudang_title').innerText = id ? 'Edit Barang' : 'Tambah Barang'; document.getElementById('gudang_id').value = id || ''; if(id) { const g = appData.gudang.find(x => x.id === id); document.getElementById('gudang_nama').value = g.nama; document.getElementById('gudang_modal').value = g.modal; document.getElementById('gudang_jual').value = g.jual; document.getElementById('gudang_stok').value = g.stok; } else { document.getElementById('gudang_nama').value = ''; document.getElementById('gudang_modal').value = ''; document.getElementById('gudang_jual').value = ''; document.getElementById('gudang_stok').value = ''; } openModal('gudangModal'); }
+      function saveGudang() { const id = document.getElementById('gudang_id').value; const data = { id: id || '', nama: document.getElementById('gudang_nama').value, modal: document.getElementById('gudang_modal').value, jual: document.getElementById('gudang_jual').value, stok: document.getElementById('gudang_stok').value }; saveDataGeneric('Gudang', data, id ? 'edit' : 'add', () => closeModal('gudangModal')); }
+      function openPenjualanModal() { const sel = document.getElementById('jual_produk'); sel.innerHTML = appData.gudang.map(g => `<option value="${g.id}" data-modal="${g.modal}" data-jual="${g.jual}">${g.nama} (Stok: ${g.stok})</option>`).join(''); document.getElementById('jual_tanggal').value = new Date().toISOString().split('T')[0]; document.getElementById('jual_qty').value = 1; autoFillHarga(); openModal('penjualanModal'); }
+      function autoFillHarga() { const sel = document.getElementById('jual_produk'); const opt = sel.options[sel.selectedIndex]; document.getElementById('jual_total').value = (opt.dataset.jual * document.getElementById('jual_qty').value) || 0; }
+      function savePenjualan() { const sel = document.getElementById('jual_produk'); const opt = sel.options[sel.selectedIndex]; const qty = Number(document.getElementById('jual_qty').value); const jual = Number(opt.dataset.jual); const modal = Number(opt.dataset.modal); const data = { id: '', tanggal: document.getElementById('jual_tanggal').value, customer: document.getElementById('jual_customer').value, wa: document.getElementById('jual_wa').value, produk: appData.gudang.find(g => g.id === opt.value).nama, qty: qty, modal: modal, jual: jual, total: jual * qty, untung: (jual - modal) * qty, status: document.getElementById('jual_status').value }; saveDataGeneric('Penjualan', data, 'add', () => { if(data.status === 'Belum Bayar') { const tagihanData = { id: '', nama: data.customer, telepon: data.wa, produk: data.produk, jumlah: data.total, tanggal: data.tanggal, jthTempo: '', status: 'Belum Bayar', catatan: 'Dari Penjualan', createdAt: new Date().toISOString() }; saveDataGeneric('Tagihan', tagihanData, 'add'); } closeModal('penjualanModal'); }); }
+      function saveBank() { const id = document.getElementById('bank_id').value; const data = { id: id || '', bank: document.getElementById('bank_bank').value, norek: document.getElementById('bank_norek').value, atasnama: document.getElementById('bank_atasnama').value }; saveDataGeneric('Bank', data, id ? 'edit' : 'add', () => closeModal('bankModal')); }
+      function deleteData(sheet, id) { if(!confirm('Yakin hapus data ini?')) return; saveDataGeneric(sheet, { id: id }, 'delete'); }
+      
+      async function simpanTargetLaba() {
+        const val = document.getElementById('targetLabaInput').value;
+        try {
+          const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiAction: 'updateSetting', targetLaba: val }) });
+          const result = await res.json();
+          if (result.success) { showToast('Target laba disimpan', 'success'); loadData(); }
+        } catch (err) { showToast('Error koneksi', 'error'); }
+      }
+      
+      function copyText(text) { navigator.clipboard.writeText(text).then(() => showToast('Tersalin: ' + text, 'success')); }
+
+      document.addEventListener('click', function(e) {
+        const navItem = e.target.closest('.nav-item');
+        if (navItem) { showPage(navItem.dataset.page, navItem); return; }
+        
+        if (e.target.closest('#menuToggleBtn')) { document.getElementById('mainSidebar').classList.toggle('open'); return; }
+        if (e.target.closest('#closeSidebarBtn')) { document.getElementById('mainSidebar').classList.remove('open'); return; }
+        if (e.target.closest('#notifBtn')) { document.getElementById('notifDropdown').classList.toggle('active'); return; }
+        
+        const actionEl = e.target.closest('[data-action]');
+        if (actionEl) {
+          const action = actionEl.dataset.action;
+          const id = actionEl.dataset.id;
+          const target = actionEl.dataset.target;
+          const sheet = actionEl.dataset.sheet;
+          const text = actionEl.dataset.text;
+
+          switch(action) {
+            case 'openModal': openModal(target); break;
+            case 'closeModal': closeModal(target); break;
+            case 'openWAModal': document.getElementById('notifDropdown').classList.remove('active'); openWAModal(id); break;
+            case 'editTagihan': editTagihan(id); break;
+            case 'deleteData': deleteData(sheet, id); break;
+            case 'openGudangModal': openGudangModal(id); break;
+            case 'openPenjualanModal': openPenjualanModal(); break;
+            case 'openBankModal': openBankModal(); break;
+            case 'saveTagihan': saveTagihan(); break;
+            case 'saveGudang': saveGudang(); break;
+            case 'savePenjualan': savePenjualan(); break;
+            case 'saveBank': saveBank(); break;
+            case 'copyText': copyText(text); break;
+          }
+        }
+        
+        const dropdown = document.getElementById('notifDropdown');
+        const wrapper = document.querySelector('.notif-wrapper');
+        if (dropdown.classList.contains('active') && !wrapper.contains(e.target)) {
+          dropdown.classList.remove('active');
+        }
+      });
+
+      document.getElementById('jual_produk').addEventListener('change', autoFillHarga);
+      document.getElementById('jual_qty').addEventListener('input', autoFillHarga);
+      document.getElementById('btnSimpanTargetLaba').addEventListener('click', simpanTargetLaba);
+      document.getElementById('btnSaveStoreProfile').addEventListener('click', saveStoreProfile);
+      document.getElementById('btnSharePromoWA').addEventListener('click', sharePromoWA);
+      document.getElementById('btnSharePromoTG').addEventListener('click', sharePromoTG);
+      document.getElementById('btnCopyMsg').addEventListener('click', copyMessage);
+      document.getElementById('btnSendWA').addEventListener('click', sendWhatsApp);
+      document.getElementById('waMessage').addEventListener('input', function() { document.getElementById('charCount').innerText = this.value.length + ' karakter'; });
+      document.getElementById('namaToko').addEventListener('input', generateMessage);
+      
+      document.querySelectorAll('.wa-tab').forEach(tab => {
+        tab.addEventListener('click', function() { setTemplate(this.dataset.template); });
+      });
+
+      document.querySelectorAll('.modal-overlay').forEach(o => {
+        o.addEventListener('click', e => { if(e.target === o) o.classList.remove('active'); });
+      });
+
+      loadData();
+    });
+  </script>
+</body>
+</html>
